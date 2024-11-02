@@ -10,24 +10,45 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/EmptyPHPWebPage.php to 
     </head>
     <body>
         <?php
-        echo '<pre>';
-        print_r($_POST);
-        echo '</pre>';
-
         require_once 'conexion.php';
         $link = conectar();
-        if (isset($_POST['op'])) {
+        
+        if (isset($_POST['op']) || isset($_POST['add'])) { //TENEMOS  FORMULARIOS
             $id = $_POST['idOculto'];
         } else {
             $id = $_POST['id'];
         }
-        
-
 //        elaboramos este ternario para comprobar si se ha pulsado el botón de
 //        dar puntos, en el caso de que así sea, id será el valor oculto idOculto
 //        de esta página para evitar perder su valor
-//        
-        //CABECERO PARA MOSTRAR LOS DATOS - CON SUS RESPECTIVAS CONSULTAS
+//   
+        
+        //INSERTAMOS AL JUGADOR ANTES DE TODO SINO CUANDO AÑADAMOS, PRIMERO
+//        MOSTRARÁ LA TABLA Y DESPUÉS AÑADIRÁ
+        
+        if (isset($_POST['seleccion'])) {
+            //RECUPERAMOS AL JUGADOR
+
+            $newJugador = $_POST['seleccion'];
+
+            //le sacamos su id
+
+            $query = "SELECT j.jug_id FROM jugadores j WHERE j.jug_nombre= '$newJugador'";
+
+            $regNuevo = mysqli_query($link, $query);
+
+            $newJugId = mysqli_fetch_row($regNuevo)[0];
+
+            //AHORA LO INSERTAMOS EN LA PARTIDA CON PUNTUACION DE CERO
+
+            $insert = "INSERT INTO puntuaciones (pun_partida, pun_jugador, pun_puntuacion)"
+                    . "VALUES ($id, $newJugId,0)";
+
+            mysqli_query($link, $insert);
+        }
+
+     
+        //CABECERO PARA MOSTRAR LOS DATOS - CON SUS RESPECTIVAS CONSULTAS   
         //FECHA
 
         $queryFecha = "SELECT p.par_fecha FROM partidas p WHERE p.par_id = $id";
@@ -66,48 +87,43 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/EmptyPHPWebPage.php to 
 
         <?php
         $valoroperar; //lo utilizamos para sumar o restar
+//PROCEDIMIENTO PARA EL UPDATE
 
+        if (isset($_POST['op'])) {
 
-        //PROCEDIMIENTO PARA EL UPDATE
-        
-        if (isset($_POST['op'])){
-            
             //SELECCIONAMOS EL ID DEL JUGADOR
-            $nombre = $_POST['nombreOculto']; 
-            
-            $selectJugador= "SELECT ju.jug_id FROM jugadores ju "
+            $nombre = $_POST['nombreOculto'];
+
+            $selectJugador = "SELECT ju.jug_id FROM jugadores ju "
                     . "join puntuaciones p on ju.jug_id=p.pun_jugador "
                     . "where ju.jug_nombre='$nombre' group by ju.jug_id";
-            $regJug = mysqli_query($link, $selectJugador); 
+            $regJug = mysqli_query($link, $selectJugador);
             $idJugador = mysqli_fetch_row($regJug)[0];
-            
-            
-            
+
             //SELECCIONAMOS LA PUNTUACION Y RESTAMOS CON EL VALOR ANTES DEL UPDATE
-            
+
             $selectPuntuacion = "SELECT p.pun_puntuacion FROM puntuaciones p "
-                                ."WHERE p.pun_partida=$id and p.pun_jugador=$idJugador"; 
-            $regPun= mysqli_query($link, $selectPuntuacion); 
-            
-            $puntuacion = mysqli_fetch_row($regPun)[0]; 
-            
+                    . "WHERE p.pun_partida=$id and p.pun_jugador=$idJugador";
+            $regPun = mysqli_query($link, $selectPuntuacion);
+
+            $puntuacion = mysqli_fetch_row($regPun)[0];
+
             //OPERAMOS
-            
+
             $operador = $_POST['op']; //RECOGEMOS EL VALOR
-            
-            
-            $resultado= $puntuacion + $operador; 
-            
-            if ($resultado<=0){
-                $resultado=0; 
+
+
+            $resultado = $puntuacion + $operador;
+
+            if ($resultado <= 0) {
+                $resultado = 0;
             }
-            
+
             //HACEMOS EL UPDATE
-            
-            $update="UPDATE puntuaciones p SET p.pun_puntuacion = $resultado "
-                    . "WHERE p.pun_partida=$id AND p.pun_jugador=$idJugador"; 
-            mysqli_query($link, $update); 
-            
+
+            $update = "UPDATE puntuaciones p SET p.pun_puntuacion = $resultado "
+                    . "WHERE p.pun_partida=$id AND p.pun_jugador=$idJugador";
+            mysqli_query($link, $update);
         }
 
 
@@ -119,7 +135,6 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/EmptyPHPWebPage.php to 
 
         $registros = mysqli_query($link, $consultaPartida);
 
-        
 //columnas
         echo '<table border="1">';
 
@@ -134,10 +149,9 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/EmptyPHPWebPage.php to 
         while ($fila = mysqli_fetch_row($registros)) {
             echo '<tr>';
             echo '<form method="post">'; //FORMULARIO IMPORTANTE
-            
+
             for ($i = 0; $i < count($fila); $i++) {
                 echo '<td>' . $fila[$i] . '</td>';
-                
             }
             //campo oculto de la fila actual
             echo '<input type="hidden" name="nombreOculto" value="' . $fila[0] . '"></td>';
@@ -163,7 +177,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/EmptyPHPWebPage.php to 
                     case 5:
                         $valor = 100;
                 }
-                echo '<td><button type="submit" name="op" value="' . $valor . '">' . $valor . '</button></td>';              
+                echo '<td><button type="submit" name="op" value="' . $valor . '">' . $valor . '</button></td>';
                 ?>
                 <!--EVITAMOS PERDER EL VALOR DE ID AL REINICIAR LA PAG-->
                 <input type="hidden" name="idOculto" value = <?php echo $id; ?>> 
@@ -173,12 +187,42 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/EmptyPHPWebPage.php to 
             echo '</tr>';
         }
         echo '</table>';
-        
-
-        mysqli_close($link);
         ?>
+        <div class="add">
+            <?php
+            //REALIZAMOS LA LISTA DESPLEGABLE
+            $select = "SELECT j.jug_nombre
+            FROM jugadores j
+            WHERE j.jug_id NOT IN (SELECT p.pun_jugador FROM puntuaciones p WHERE p.pun_partida=$id)";
+
+            $registros = mysqli_query($link, $select);
+
+            echo '<form method="post">';
+
+            echo '<label for ="seleccion">Selecciona al nuevo jugador</label>';
+
+            echo '<select name="seleccion">';
+
+            while ($registro = mysqli_fetch_row($registros)) {
+                echo '<option value="' . $registro[0] . '">' . $registro[0] . '</option>';
+            }
+
+            echo '</select>';
+            ?>
+
+            <!--DE NUEVO, EVITAMOS PERDER EL VALOR DE ID AL REINICIAR LA PAG-->
+            <input type="hidden" name="idOculto" value = <?php echo $id; ?>> 
+            <input type="submit" name="add" value="Añadir Jugador">
+
+            <?php
+            echo '</form>';
+
+
+            mysqli_close($link);
+            ?>
+        </div>
         <form action="index.php" method="post">
-            <input type="submit" name="reiniciar" value="Reiniciar">
+            <input type="submit" name="reiniciar" value="Selección de partida">
         </form>
     </body>
 </html>
