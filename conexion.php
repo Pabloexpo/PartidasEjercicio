@@ -11,7 +11,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/EmptyPHPWebPage.php to 
     <body>
         <?php
             function conectar () {
-                $link = mysqli_connect('localhost', 'super', 'alumno', 'videojuegos');
+                $link = mysqli_connect('localhost', 'super', 'alumno', 'videojuegos2024');
                 if ($link) {
                     return $link;
                 } else {

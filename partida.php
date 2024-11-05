@@ -6,14 +6,29 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/EmptyPHPWebPage.php to 
 <html>
     <head>
         <meta charset="UTF-8">
-        <title></title>
+        <title>Partida</title>
+        <style>
+            html{
+                background: lightgray;
+            }
+            body{
+                width: 1200px;
+                margin: 0 auto;
+                display:flex;
+                flex-direction: column;
+                align-items: center;
+                background-color: white;
+                font-family: arial;
+
+            }
+        </style>
     </head>
     <body>
         <?php
         require_once 'conexion.php';
         $link = conectar();
-        
-        if (isset($_POST['op']) || isset($_POST['add'])) { //TENEMOS  FORMULARIOS
+
+        if (isset($_POST['op']) || isset($_POST['add'])) { //TENEMOS 2 FORMULARIOS
             $id = $_POST['idOculto'];
         } else {
             $id = $_POST['id'];
@@ -22,10 +37,9 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/EmptyPHPWebPage.php to 
 //        dar puntos, en el caso de que así sea, id será el valor oculto idOculto
 //        de esta página para evitar perder su valor
 //   
-        
         //INSERTAMOS AL JUGADOR ANTES DE TODO SINO CUANDO AÑADAMOS, PRIMERO
 //        MOSTRARÁ LA TABLA Y DESPUÉS AÑADIRÁ
-        
+
         if (isset($_POST['seleccion'])) {
             //RECUPERAMOS AL JUGADOR
 
@@ -47,7 +61,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/EmptyPHPWebPage.php to 
             mysqli_query($link, $insert);
         }
 
-     
+
         //CABECERO PARA MOSTRAR LOS DATOS - CON SUS RESPECTIVAS CONSULTAS   
         //FECHA
 
@@ -136,6 +150,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/EmptyPHPWebPage.php to 
         $registros = mysqli_query($link, $consultaPartida);
 
 //columnas
+        echo '<main>';
         echo '<table border="1">';
 
         echo '<tr>';
@@ -217,12 +232,12 @@ Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/EmptyPHPWebPage.php to 
             <?php
             echo '</form>';
 
-
             mysqli_close($link);
             ?>
         </div>
         <form action="index.php" method="post">
             <input type="submit" name="reiniciar" value="Selección de partida">
         </form>
-    </body>
+    </main>
+</body>
 </html>
